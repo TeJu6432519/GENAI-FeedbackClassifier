@@ -1,0 +1,55 @@
+import os
+import csv
+from ibm_watsonx_ai import APIClient
+from ibm_watsonx_ai.metanames import GenTextParamsMetaNames
+
+# 1. Set up authentication and client
+os.environ["IBM_CLOUD_API_KEY"] = "YOUR_IBM_CLOUD_API_KEY"
+os.environ["WATSONX_PROJECT_ID"] = "YOUR_PROJECT_ID"
+# Optionally set WATSONX_DEPLOYMENT_ID if using a specific deployment
+
+client = APIClient()
+
+# 2. Load CSV input and prepare output CSV
+input_file = "feedback_input.csv"
+output_file = "feedback_output.csv"
+
+# 3. Define the few‑shot prompt template
+template = """You will classify each student feedback into one of: Academics, Facilities, Administration, Other.
+
+Examples:
+Feedback: "The library hours are too short on weekends." → Facilities
+Feedback: "Professors explain topics clearly." → Academics
+Feedback: "The registration process is difficult." → Administration
+
+Now classify:
+Feedback: "{text}" →"""
+
+# 4. Configure generation parameters
+params = {
+    GenTextParamsMetaNames().max_tokens: 3,
+    GenTextParamsMetaNames().temperature: 0.0,
+    GenTextParamsMetaNames().stop: ["\n"]
+}
+
+# 5. Read, classify, and write output
+with open(input_file, newline="", encoding="utf-8") as infile, \
+     open(output_file, "w", newline="", encoding="utf-8") as outfile:
+
+    reader = csv.DictReader(infile)
+    fieldnames = reader.fieldnames + ["predicted_category"]
+    writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+    writer.writeheader()
+
+    for row in reader:
+        feedback = row["feedback_text"]
+        prompt = template.format(text=feedback)
+
+        model = client.model  # default on project or specify deployment
+        resp = model.generate_text(prompt=[prompt], params=params)
+        label = resp[0].strip()
+
+        row["predicted_category"] = label
+        writer.writerow(row)
+
+print(f"✅ Classification complete. Results saved to {output_file}")
