@@ -1,0 +1,23 @@
+psql -d postgres
+CREATE ROLE tejus WITH LOGIN SUPERUSER PASSWORD '1234';
+CREATE DATABASE gymdb OWNER tejus;
+\q
+
+psql -U tejus -d gymdb
+create sql databases
+to chk tables created-\dt
+
+TO ENTER DB....
+cd rnw-backend
+PGPASSWORD=1234 psql -h localhost -p 5432 -U tejus -d gymdb
+this will open gymdb=# 
+
+now use sql queries-
+\dt- describe all tables 
+
+URLS FOR DB-
+http://localhost:5001/api/bookings
+http://localhost:5001/api/time-slots
+http://localhost:5001/api/muscle-groups
+http://localhost:5001/api/equipment-WITHIN MUSCLE GRP 
+
